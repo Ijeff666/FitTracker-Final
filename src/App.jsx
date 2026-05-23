@@ -402,7 +402,7 @@ export default function App() {
       <div className="pb-20">
         {tab==='dashboard'&&<DashboardTab workouts={workouts} plans={plans} schedule={schedule} onStart={setActiveWorkout} bodyweight={bodyweight} water={water} addCup={addCup} removeCup={removeCup} T={T}/>}
         {tab==='log'&&<LogTab workouts={workouts} addWorkout={addWorkout} delWorkout={(id)=>setWorkouts(p=>p.filter(w=>w.id!==id))} plans={plans} T={T} exportCSV={exportCSV}/>}
-        {tab==='plans'&&<PlansTab plans={plans} setPlans={setPlans} schedule={schedule} setSched={setSched} T={T}/>}
+        {tab==='plans'&&<PlansTab plans={plans} setPlans={setPlans} schedule={schedule} setSched={setSched} onStart={setActiveWorkout} T={T}/>}
         {tab==='body'&&<BodyTab bodyweight={bodyweight} setBW={setBW} workouts={workouts} T={T}/>}
         {tab==='notes'&&<NotesTab notes={notes} setNotes={setNotes} T={T}/>}
         {tab==='stats'&&<StatsTab workouts={workouts} T={T} exportCSV={exportCSV}/>}
@@ -788,8 +788,8 @@ function WorkoutSession({plan,workouts,T,onFinish,onCancel}) {
                 </div>
                 <div className="flex gap-2">
                   <button onClick={()=>prevWeight!==null&&setWeight(prevWeight)} disabled={prevWeight===null}
-                    className="flex-1 py-2 rounded-xl text-xs font-bold" style={{background:T.inp,color:prevWeight===null?T.sub:T.accent}}>Undo</button>
-                  <button onClick={()=>{setPrevWeight(weight); setWeight(ex.weight);}} className="flex-1 py-2 rounded-xl text-xs font-bold" style={{background:T.inp,color:T.sub}}>Reset</button>
+                    className="flex-1 py-2 rounded-xl text-xs font-bold" style={{background:T.inp,color:prevWeight===null?T.sub:T.accent,border:prevWeight===null?`1px solid ${T.border}`:`1px solid ${T.accent}`}}>Undo</button>
+                  <button onClick={()=>{setPrevWeight(weight); setWeight(ex.weight);}} className="flex-1 py-2 rounded-xl text-xs font-bold" style={{background:T.inp,color:T.sub,border:`1px solid ${T.border}`}}>Reset</button>
                 </div>
               </div>
               {/* Reps */}
@@ -818,7 +818,7 @@ function WorkoutSession({plan,workouts,T,onFinish,onCancel}) {
 }
 
 // ─── Plans Tab ────────────────────────────────────────────────────────────────
-function PlansTab({plans,setPlans,schedule,setSched,T}) {
+function PlansTab({plans,setPlans,schedule,setSched,onStart,T}) {
   const [editing,setEditing]=useState(null);
   const [schedOpen,setSchedOpen]=useState(false);
   const del=(id)=>{setPlans(p=>p.filter(x=>x.id!==id));setSched(s=>{const n={...s};Object.keys(n).forEach(k=>{if(n[k]===id)n[k]=null;});return n;});};
@@ -868,6 +868,9 @@ function PlansTab({plans,setPlans,schedule,setSched,T}) {
               <span style={{color:T.sub}}>{ex.sets}×{ex.reps} @ {ex.weight>0?`${ex.weight}lbs`:'BW'}</span>
             </div>
           ))}
+          <button onClick={()=>onStart(plan.id)} className="mt-3 w-full py-3 rounded-xl font-black text-white flex items-center justify-center gap-2" style={{background:plan.color}}>
+            <Play size={15} fill="white"/> START WORKOUT
+          </button>
         </div>
       ))}
     </div>
