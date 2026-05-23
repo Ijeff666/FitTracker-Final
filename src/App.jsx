@@ -360,10 +360,22 @@ export default function App() {
     const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([rows.map(r=>r.join(',')).join('\n')],{type:'text/csv'}));a.download='workouts.csv';a.click();
   };
 
-  if(activeWorkout) return (
-    <WorkoutSession plan={plans.find(p=>p.id===activeWorkout)} workouts={workouts} T={T}
-      onFinish={(w)=>{addWorkout(w);setActiveWorkout(null);}} onCancel={()=>setActiveWorkout(null)}/>
-  );
+  if(activeWorkout) {
+    const plan = plans.find(p=>p.id===activeWorkout);
+    if(!plan) return (
+      <div className="min-h-screen flex items-center justify-center p-6 text-center" style={{background:T.bg,color:T.text}}>
+        <div className={C+' p-6'} style={s.card(T)}>
+          <div className="text-lg font-black mb-2">Workout not found</div>
+          <div className="text-sm mb-4" style={{color:T.sub}}>The selected workout could not be loaded. Tap back to return to your dashboard.</div>
+          <button onClick={()=>setActiveWorkout(null)} className="px-5 py-3 rounded-2xl font-black text-white" style={{background:T.accent}}>Back</button>
+        </div>
+      </div>
+    );
+    return (
+      <WorkoutSession plan={plan} workouts={workouts} T={T}
+        onFinish={(w)=>{addWorkout(w);setActiveWorkout(null);}} onCancel={()=>setActiveWorkout(null)}/>
+    );
+  }
 
   const NAV=[
     {id:'dashboard',icon:<Home size={17}/>,label:'Home'},
@@ -672,6 +684,7 @@ function WorkoutSession({plan,workouts,T,onFinish,onCancel}) {
   const [resting,setResting]=useState(false);
   const [done,setDone]=useState([]);
   const [weight,setWeight]=useState(null);
+  const [prevWeight,setPrevWeight]=useState(null);
   const [reps,setReps]=useState(null);
   const [finished,setFinished]=useState(false);
   const [swapOpen,setSwapOpen]=useState(false);
@@ -679,7 +692,14 @@ function WorkoutSession({plan,workouts,T,onFinish,onCancel}) {
   const ex=exs[exIdx];
   const totalSets=exs.reduce((a,e)=>a+e.sets,0);
   const doneSets=done.reduce((a,d)=>a+d.sets,0)+setIdx;
-  useEffect(()=>{if(ex){setWeight(ex.weight);setReps(ex.reps);}},[ exIdx]);
+  useEffect(()=>{
+    if(ex){
+      setWeight(ex.weight);
+      setPrevWeight(null);
+      setReps(ex.reps);
+    }
+  },[exIdx, ex?.weight, ex?.reps]);
+  const updateWeight = (next) => { setPrevWeight(weight); setWeight(next); };
   const logSet=()=>{
     if(setIdx+1<ex.sets){setSetIdx(s=>s+1);setResting(true);}
     else{
@@ -757,14 +777,19 @@ function WorkoutSession({plan,workouts,T,onFinish,onCancel}) {
               <div className={C+' p-3'} style={s.card(T)}>
                 <div className="text-xs uppercase tracking-widest mb-2 text-center font-bold" style={{color:T.sub}}>Weight (lbs)</div>
                 <div className="flex items-center gap-1 mb-2">
-                  <button onClick={()=>setWeight(v=>Math.max(0,Number(v)-5))} className="w-10 h-10 rounded-xl font-black text-xl flex items-center justify-center flex-shrink-0" style={{background:T.inp,color:T.text}}>−</button>
-                  <input type="number" value={weight??''} onChange={e=>setWeight(e.target.value)} className="w-0 flex-1 bg-transparent text-center font-black outline-none" style={{color:T.accent,fontSize:'1.4rem'}}/>
-                  <button onClick={()=>setWeight(v=>Number(v)+5)} className="w-10 h-10 rounded-xl font-black text-xl flex items-center justify-center flex-shrink-0" style={{background:T.inp,color:T.text}}>+</button>
+                  <button onClick={()=>updateWeight(Math.max(0,(Number(weight)||0) - 5))} className="w-10 h-10 rounded-xl font-black text-xl flex items-center justify-center flex-shrink-0" style={{background:T.inp,color:T.text}}>−</button>
+                  <input type="number" value={weight??''} onChange={e=>updateWeight(e.target.value)} className="w-0 flex-1 bg-transparent text-center font-black outline-none" style={{color:T.accent,fontSize:'1.4rem'}}/>
+                  <button onClick={()=>updateWeight((Number(weight)||0) + 5)} className="w-10 h-10 rounded-xl font-black text-xl flex items-center justify-center flex-shrink-0" style={{background:T.inp,color:T.text}}>+</button>
                 </div>
-                <div className="flex gap-1">
+                <div className="flex gap-1 mb-2">
                   {[-10,-5,5,10].map(d=>(
-                    <button key={d} onClick={()=>setWeight(v=>Math.max(0,Number(v)+d))} className="flex-1 py-1 rounded-lg text-xs font-bold" style={{background:T.inp,color:d>0?T.accent:T.sub}}>{d>0?`+${d}`:d}</button>
+                    <button key={d} onClick={()=>updateWeight(Math.max(0,(Number(weight)||0) + d))} className="flex-1 py-1 rounded-lg text-xs font-bold" style={{background:T.inp,color:d>0?T.accent:T.sub}}>{d>0?`+${d}`:d}</button>
                   ))}
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={()=>prevWeight!==null&&setWeight(prevWeight)} disabled={prevWeight===null}
+                    className="flex-1 py-2 rounded-xl text-xs font-bold" style={{background:T.inp,color:prevWeight===null?T.sub:T.accent}}>Undo</button>
+                  <button onClick={()=>{setPrevWeight(weight); setWeight(ex.weight);}} className="flex-1 py-2 rounded-xl text-xs font-bold" style={{background:T.inp,color:T.sub}}>Reset</button>
                 </div>
               </div>
               {/* Reps */}
