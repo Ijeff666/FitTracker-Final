@@ -129,12 +129,20 @@ const epley = (w,r) => r===1?w:Math.round(w*(1+r/30));
 const daysSince = (ds) => Math.floor((Date.now()-new Date(ds))/(86400000));
 const getExHist = (workouts,name) => {
   const r=[];
-  workouts.forEach(w=>w.exercises?.forEach(e=>{if(e.name.toLowerCase()===name.toLowerCase())r.push({...e,date:w.date});}));
+  const target = name?String(name).toLowerCase():'';
+  workouts.forEach(w=>w.exercises?.forEach(e=>{
+    const en = e?.name?String(e.name).toLowerCase():'';
+    if(en && target && en===target) r.push({...e,date:w.date});
+  }));
   return r.sort((a,b)=>b.date.localeCompare(a.date));
 };
 const getPRs = (workouts) => {
   const b={};
-  workouts.forEach(w=>w.exercises?.forEach(e=>{if(!b[e.name]||e.weight>b[e.name].weight||(e.weight===b[e.name].weight&&e.reps>b[e.name].reps))b[e.name]={...e,date:w.date};}));
+  workouts.forEach(w=>w.exercises?.forEach(e=>{
+    if(!e || !e.name) return;
+    const key = String(e.name);
+    if(!b[key] || e.weight>b[key].weight || (e.weight===b[key].weight && e.reps>b[key].reps)) b[key] = {...e,date:w.date};
+  }));
   return Object.values(b).sort((a,b)=>b.date.localeCompare(a.date));
 };
 const calcWeekVol = (workouts) => {
