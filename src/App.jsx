@@ -716,6 +716,13 @@ function WorkoutSession({plan,workouts,T,onFinish,onCancel}) {
       if(exIdx+1<exs.length){setExIdx(i=>i+1);setResting(true);}else setFinished(true);
     }
   };
+  const skipExercise = () => {
+    setSetIdx(0);
+    if(exIdx+1<exs.length){
+      setExIdx(i=>i+1);
+      setResting(true);
+    } else setFinished(true);
+  };
   const hist=getExHist(workouts,ex?.name||'');const lastTime=hist[0];
   const alts=ALTS[ex?.name]||['Dumbbell variation','Machine variation','Bodyweight variation'];
 
@@ -818,6 +825,7 @@ function WorkoutSession({plan,workouts,T,onFinish,onCancel}) {
             <button onClick={logSet} className="w-full py-5 rounded-2xl font-black text-xl text-white flex items-center justify-center gap-2" style={{background:plan.color}}>
               <Check size={21}/> LOG SET
             </button>
+            <button onClick={skipExercise} className="w-full mt-3 py-3 rounded-xl font-bold text-sm" style={{background:T.inp,color:T.sub,border:`1px solid ${T.border}`}}>Skip Exercise</button>
           </>
         )}
       </div>
